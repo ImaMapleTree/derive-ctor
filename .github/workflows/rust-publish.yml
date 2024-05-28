@@ -1,4 +1,4 @@
-name: Rust CD
+name: Rust Publish
 
 on:
   release:
@@ -6,16 +6,14 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  CARGO_REGISTRY_TOKEN: ${{ secrets.DERIVE_CTOR_API_KEY }}
 
 jobs:
-  build:
-
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
     - name: Login
-      run: cargo login
+      run: cargo login ${{ secrets.DERIVE_CTOR_API_KEY }}
     - name: Deploy
       run: cargo publish
