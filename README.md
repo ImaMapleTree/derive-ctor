@@ -11,6 +11,7 @@
   - `#[ctor(default)]` - Exclude the field from the generated method and use its default value.
   - `#[ctor(expr(EXPRESSION))]` - Exclude the field from the generated method and use the defined expression as its default value.
   - `#[ctor(impl)]` - Change the parameter type for the generated method to `impl Into<Type>`.
+- Support no-std via `features = ["no-std"]`
 
 ## Basic Usage
 

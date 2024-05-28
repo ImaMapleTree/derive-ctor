@@ -2,7 +2,7 @@
 name = "derive-ctor"
 version = "0.1.1"
 description = "Adds `#[derive(ctor)]` which allows for the auto-generation of a constructor."
-keywords = ["derive", "macro", "trait", "procedural"]
+keywords = ["derive", "macro", "trait", "procedural", "no_std"]
 authors = ["Evan Cowin"]
 license = "MIT"
 repository = "https://github.com/ImaMapleTree/derive-ctor"
