@@ -1,5 +1,26 @@
-use proc_macro::TokenStream;
+#![cfg_attr(feature = "no-std", no_std, doc = "Test")]
+#![doc = include_str!("../doc/overview.md")]
+
+#[cfg(feature = "no-std")]
+extern crate alloc;
+#[cfg(feature = "no-std")]
+use alloc::vec;
+#[cfg(feature = "no-std")]
+use alloc::vec::Vec;
+#[cfg(feature = "no-std")]
+use alloc::collections::BTreeSet as HashSet;
+#[cfg(feature = "no-std")]
+use alloc::string::ToString;
+
+#[cfg(not(feature = "no-std"))]
+use std::vec;
+#[cfg(not(feature = "no-std"))]
+use std::vec::Vec;
+#[cfg(not(feature = "no-std"))]
 use std::collections::HashSet;
+
+
+use proc_macro::TokenStream;
 
 use proc_macro2::{Delimiter, Punct, Span};
 use proc_macro2::Spacing::Alone;
@@ -9,6 +30,8 @@ use syn::parse::discouraged::AnyDelimiter;
 use syn::parse::ParseStream;
 use syn::spanned::Spanned;
 use syn::token::{Comma, Impl, Pub};
+
+
 
 static FIELD_CONFIG_ERR_MSG: &str =
     "Unexpected property: \"{prop}\" (must be one of the following:\
@@ -37,6 +60,7 @@ impl Default for CtorTypeConfiguration {
 ///    field: i16
 /// }
 /// ```
+
 #[derive(Clone)]
 struct FieldConfig {
     property: FieldConfigProperty,
