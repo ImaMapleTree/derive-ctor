@@ -97,17 +97,19 @@ impl Parse for FieldConfig {
             return Ok(config)
         }
 
-        let (delim, span, buffer) = input.parse_any_delimiter()?;
-        if delim != Delimiter::Bracket {
-            return Err(Error::new(span.span(), "Expected enclosing brackets"))
-        }
-
         // consume constructor specifier ex: 1, 2, 3
-        loop {
-            config.applications.insert(buffer.parse::<LitInt>()?.base10_parse()?);
-            if buffer.parse::<Comma>().is_err() {
-                break;
+        if let Ok((delim, span, buffer)) = input.parse_any_delimiter() {
+            if delim != Delimiter::Bracket {
+                return Err(Error::new(span.span(), "Expected enclosing brackets"))
             }
+            loop {
+                config.applications.insert(buffer.parse::<LitInt>()?.base10_parse()?);
+                if buffer.parse::<Comma>().is_err() {
+                    break;
+                }
+            }
+        } else {
+            config.applications.insert(input.parse::<LitInt>()?.base10_parse()?);
         }
 
         Ok(config)

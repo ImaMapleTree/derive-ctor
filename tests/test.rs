@@ -197,7 +197,7 @@ fn test_method_2() -> String {
 pub struct TargetedGenerationStruct2 {
     #[ctor(method(test_method_2) = [1])]
     arg1: String,
-    #[ctor(value(33) = [0])]
+    #[ctor(value(33) = 0)]
     arg2: u32
 }
 
