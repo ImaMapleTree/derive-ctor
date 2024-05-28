@@ -19,7 +19,7 @@ Add `derive-ctor` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-derive-ctor = "0.1"
+derive-ctor = "0.1.1"
 ```
 
 Import the crate in your Rust code:
