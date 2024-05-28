@@ -5,7 +5,7 @@ description = "Adds `#[derive(ctor)]` which allows for the auto-generation of a 
 keywords = ["derive", "macro", "trait", "procedural"]
 authors = ["Evan Cowin"]
 license = "MIT"
-#repository = ""
+repository = "https://github.com/ImaMapleTree/derive-ctor"
 edition = "2021"
 
 [lib]
