@@ -23,9 +23,9 @@ fn test_method_2() -> String {
 #[derive(ctor, Debug, PartialEq)]
 #[ctor(new, new2)]
 struct TargetedGenerationStruct2 {
-    #[ctor(value(test_method_2()) = [1])]
+    #[ctor(expr(test_method_2()) = [1])]
     arg1: String,
-    #[ctor(value(33) = 0)]
+    #[ctor(expr(33) = 0)]
     arg2: u32
 }
 
@@ -43,7 +43,7 @@ fn test_struct_with_multiple_targeted_generations() {
 struct TestStructWithFieldWithMultipleTargets {
     #[ctor(impl)]
     arg1: String,
-    #[ctor(value(5) = [0, 1])]
+    #[ctor(expr(5) = [0, 1])]
     arg2: u32
 }
 

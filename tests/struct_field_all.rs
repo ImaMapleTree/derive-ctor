@@ -6,7 +6,7 @@ struct MixedStruct {
     provided2: bool,
     #[ctor(impl)]
     provided3: String,
-    #[ctor(value("Foo"))]
+    #[ctor(expr("Foo"))]
     generated1: &'static str,
     #[ctor(default)]
     generated2: u32

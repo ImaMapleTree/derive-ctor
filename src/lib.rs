@@ -1,5 +1,5 @@
 #![cfg_attr(feature = "no-std", no_std, doc = "Test")]
-#![doc = include_str!("../doc/overview.md")]
+#![doc = include_str!("../README.md")]
 
 #[cfg(feature = "no-std")]
 extern crate alloc;
@@ -35,7 +35,7 @@ use syn::token::{Comma, Impl, Pub};
 
 static FIELD_CONFIG_ERR_MSG: &str =
     "Unexpected property: \"{prop}\" (must be one of the following:\
-    \"default\", \"method\", \"value\", \"impl\")";
+    \"default\", \"expr\", \"impl\")";
 
 struct CtorTypeConfiguration {
     definitions: Vec<(Visibility, Ident)>
@@ -71,8 +71,7 @@ struct FieldConfig {
 enum FieldConfigProperty {
     Default,
     Impl,
-    Method { ident: Ident },
-    Value { expression: proc_macro2::TokenStream }
+    Expression { expression: proc_macro2::TokenStream }
 }
 
 struct RequiredStructField {
@@ -150,27 +149,22 @@ impl Parse for FieldConfigProperty {
         let property_name = property.to_string();
         match property_name.as_str() {
             "default" => Ok(FieldConfigProperty::Default),
-            "method" => {
+            "expr" => {
                 let (delimiter, span, buffer) = input.parse_any_delimiter()?;
 
                 if delimiter != Delimiter::Parenthesis {
                     return Err(Error::new(span.span(), "Expected enclosing parenthesis"))
                 }
 
-                Ok(FieldConfigProperty::Method { ident: buffer.parse()? })
-            },
-            "value" => {
-                let (delimiter, span, buffer) = input.parse_any_delimiter()?;
-
-                if delimiter != Delimiter::Parenthesis {
-                    return Err(Error::new(span.span(), "Expected enclosing parenthesis"))
-                }
-
-                Ok(FieldConfigProperty::Value {
+                Ok(FieldConfigProperty::Expression {
                     expression: proc_macro2::TokenStream::parse(&buffer)
                         .expect("Unable to convert buffer back into TokenStream")
                 })
             },
+            "method" => Err(Error::new(
+                property.span(),
+                "\"method\" property has been removed. Please refer to documentation for a list of valid properties."
+            )),
             _ => Err(Error::new(
                 property.span(),
                 FIELD_CONFIG_ERR_MSG.replace("{prop}", &property_name)
@@ -199,8 +193,7 @@ impl ToTokens for GeneratedStructField {
 
         tokens.extend(match &self.configuration {
             FieldConfigProperty::Default => quote! { Default::default() },
-            FieldConfigProperty::Method { ident } => quote! { #ident() },
-            FieldConfigProperty::Value { expression } => expression.clone(),
+            FieldConfigProperty::Expression { expression } => expression.clone(),
             FieldConfigProperty::Impl => quote! { #ident.into() }
         });
 
