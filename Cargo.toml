@@ -12,6 +12,8 @@ exclude = [".github/*", ".gitignore"]
 [lib]
 proc-macro = true
 
+[features]
+no-std = []
 
 [dependencies]
 syn = { version = "2.0.*" }
