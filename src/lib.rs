@@ -28,6 +28,8 @@ impl Default for CtorTypeConfiguration {
 ///
 /// # Example
 ///
+/// use derive_ctor::ctor;
+///
 /// ```
 /// struct Example {
 ///     #[ctor(default = [1, 2])]
