@@ -278,13 +278,11 @@ fn create_ctor_struct_impl(
     }
 
 
-    let ts = TokenStream::from(quote! {
+    TokenStream::from(quote! {
         impl #impl_generics #ident #ty_generics #where_clause {
             #(#methods)*
         }
-    });
-    println!("Output: {}", ts);
-    ts
+    })
 }
 
 fn try_parse_type_attributes(attributes: &[Attribute]) -> Result<CtorTypeConfiguration, Error> {
