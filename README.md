@@ -5,7 +5,7 @@
 ## Features
 
 - Automatically generate a constructor method for all fields in a struct with `#[derive(ctor)]`.
-- Customize the name of the auto-generated constructor using `#[ctor(method_name)]`.
+- Customize the name and visibility of the auto-generated constructor using `#[ctor(visibility method_name)]`.
 - Provide a list of names to generate multiple constructors.
 - Customize field behavior in the constructor with the following attributes:
     - `#[ctor(default)]` - Exclude the field from the generated method and use its default value.
