@@ -7,9 +7,11 @@ authors = ["Evan Cowin"]
 license = "MIT"
 repository = "https://github.com/ImaMapleTree/derive-ctor"
 edition = "2021"
+exclude = [".github/*", ".gitignore"]
 
 [lib]
 proc-macro = true
+
 
 [dependencies]
 syn = { version = "2.0.*" }
