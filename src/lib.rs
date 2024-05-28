@@ -28,9 +28,10 @@ impl Default for CtorTypeConfiguration {
 ///
 /// # Example
 ///
+/// ```
 /// use derive_ctor::ctor;
 ///
-/// ```
+/// #[derive(ctor)]
 /// struct Example {
 ///     #[ctor(default = [1, 2])]
 ///    field: i16
