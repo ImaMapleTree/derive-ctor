@@ -8,7 +8,7 @@ use syn::{Attribute, Data, DeriveInput, Error, Fields, Generics, Ident, LitInt, 
 use syn::parse::discouraged::AnyDelimiter;
 use syn::parse::ParseStream;
 use syn::spanned::Spanned;
-use syn::token::{Comma, Impl};
+use syn::token::{Comma, Impl, Pub};
 
 static FIELD_CONFIG_ERR_MSG: &str =
     "Unexpected property: \"{prop}\" (must be one of the following:\
@@ -20,7 +20,7 @@ struct CtorTypeConfiguration {
 
 impl Default for CtorTypeConfiguration {
     fn default() -> Self {
-        Self { definitions: vec![(Visibility::Inherited, Ident::new("new", Span::mixed_site()))] }
+        Self { definitions: vec![(Visibility::Public(Pub { span: Span::call_site() }), Ident::new("new", Span::mixed_site()))] }
     }
 }
 
