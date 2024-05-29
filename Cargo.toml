@@ -1,6 +1,6 @@
 [package]
 name = "derive-ctor"
-version = "0.1.1"
+version = "0.2.0"
 description = "Adds `#[derive(ctor)]` which allows for the auto-generation of a constructor."
 keywords = ["derive", "macro", "trait", "procedural", "no_std"]
 authors = ["Evan Cowin"]

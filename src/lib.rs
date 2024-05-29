@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "no-std", no_std, doc = "Test")]
+#![cfg_attr(feature = "no-std", no_std, doc = "Removes all std library dependencies within library.")]
 #![doc = include_str!("../README.md")]
 
 use proc_macro::TokenStream;
