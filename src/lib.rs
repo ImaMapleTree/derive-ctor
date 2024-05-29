@@ -15,7 +15,9 @@ use syn::Data;
 use syn::DeriveInput;
 use syn::Error;
 use syn::Type;
+use crate::enums::create_enum_token_stream;
 
+pub(crate) mod enums;
 pub(crate) mod structs;
 pub(crate) mod fields;
 
@@ -28,7 +30,7 @@ pub fn derive_ctor(input: TokenStream) -> TokenStream {
 
     match &derive_input.data {
         Data::Struct(_) => create_struct_token_stream(derive_input),
-        Data::Enum(_) => TokenStream::from(Error::new(derive_input.span(), "Unions are not yet supported by ctor").to_compile_error()),
+        Data::Enum(_) => create_enum_token_stream(derive_input),
         Data::Union(_) => TokenStream::from(Error::new(derive_input.span(), "Unions are not yet supported by ctor").to_compile_error())
     }
 }
