@@ -1,13 +1,13 @@
 # derive-ctor
 
-`derive-ctor` is a Rust procedural macro crate that allows you to easily generate constructor methods for your structs. With the `#[derive(ctor)]` attribute, you can automatically create a constructor for all fields in the struct. The crate also provides various options to customize the generated constructor methods.
+`derive-ctor` is a Rust procedural macro crate that allows you to easily generate constructor methods for your structs. With the `#[derive(ctor)]` attribute, you can automatically create a constructor(s) for structs and enums. The crate also provides various options to customize the generated constructor methods.
 
 ## Features
 
-- Automatically generate a constructor method for all fields in a struct with `#[derive(ctor)]`.
+- Automatically generate a constructor method for structs and enums with `#[derive(ctor)]`.
 - Customize the name and visibility of the auto-generated constructor using `#[ctor(visibility method_name)]`.
   - Supports const constructors by adding the "const" keyword.
-- Provide a list of names to generate multiple constructors.
+  - Provide a list of names to generate multiple constructors.
 - Customize field behavior in the constructor with the following attributes:
   - `#[ctor(cloned)]` - Changes the parameter type to accept a reference type which is then cloned into the created struct.
   - `#[ctor(default)]` - Exclude the field from the generated method and use its default value.
@@ -46,7 +46,7 @@ struct MyStruct {
 let my_struct = MyStruct::new(1, String::from("Foo"));
 ```
 
-## Configurations
+## Struct Configurations
 
 You can modify the name and visibility of the generated method, and define additional
 constructors by using the `#[ctor]` attribute on the target struct after `ctor` is derived.
@@ -65,9 +65,59 @@ struct MyStruct {
 }
 ```
 
-### Field Configurations
+## Enum Configurations
+
+By default a constructor will be generated for each variant. This constructor by default will match the name of its
+respective variant and will be public. This default behaviour can be changed by annotating the enum with
+`#[ctor(prefix = PREFIX, visibility = VISIBILITY)]`. Note that both parameters are optional within the attribute.
+Specifying this attribute will change the **default** generated method for each variant, however, each variant
+can additionally define its own configuration which overrides the one defined by the enum.
+
+### Default variant constructor example
+
+```rust
+use derive_ctor::ctor;
+
+#[derive(ctor)]
+enum MyEnum {
+    Variant1,
+    Variant2(i32),
+    Variant3 { value: bool }
+}
+
+let v1 = MyEnum::variant1();
+let v2 = MyEnum::variant2(100);
+let v3 = MyEnum::variant3(true);
+```
+
+### Configured variant constructor example
+Variant constructor configuration is identical to struct constructor configuration. Refer to the below for
+sample syntax or go-back to the struct constructor configuration for more information.
+
+```rust
+use derive_ctor::ctor;
+
+#[derive(ctor)]
+#[ctor(prefix = new, vis = pub(crate))]
+enum MyEnum {
+    #[ctor(const pub v1, other)]
+    Variant1,
+    Variant2,
+    Variant3
+}
+
+const v1_1: MyEnum = MyEnum::v1();
+let v1_2 = MyEnum::other();
+let v2 = MyEnum::new_variant2();
+let v3 = MyEnum::new_variant3();
+```
+
+If a variant is derived with `#[ctor(none)]` it will **not** have a constructor generated for it.
+
+## Field Configurations
 
 Fields can also be annotated with `#[ctor(PROPERTY)]` to change their behaviour in the generated methods.
+**These configurations work for ALL enum-types and structs!**
 The following are the available properties that can be used with the field-attributes
 
 `#[ctor(cloned)]` - This property creates a parameter that accepts a type reference of the annotated field and

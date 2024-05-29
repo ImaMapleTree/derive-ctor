@@ -36,7 +36,7 @@ impl CtorStructConfiguration {
                 Some(prefix) => syn::parse_str(&(prefix.to_string() + "_" + &variant_name.to_string())).unwrap()
             },
             is_const: false,
-        }]}
+        }], is_none: false }
     }
 }
 
@@ -114,6 +114,11 @@ fn create_ctor_enum_impl(
             Ok(config) => config,
             Err(err) => return TokenStream::from(err.to_compile_error())
         };
+        
+        // stop generation of method if none
+        if variant_config.is_none {
+            continue;
+        }
     
         let meta = match generate_ctor_meta_from_fields(variant.fields, variant_config.definitions.len()) {
             Ok(meta) => meta,

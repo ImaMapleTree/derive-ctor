@@ -39,12 +39,13 @@ impl Default for CtorDefinition {
 }
 
 pub(crate) struct CtorStructConfiguration {
-    pub(crate) definitions: Vec<CtorDefinition>
+    pub(crate) definitions: Vec<CtorDefinition>,
+    pub(crate) is_none: bool
 }
 
 impl Default for CtorStructConfiguration {
     fn default() -> Self {
-        Self { definitions: vec![CtorDefinition::default()] }
+        Self { definitions: vec![CtorDefinition::default()], is_none: false }
     }
 }
 
@@ -68,9 +69,16 @@ impl Parse for CtorStructConfiguration {
                     is_const
                 }
             } else {
+                let ident = input.parse::<Ident>()?;
+                
+                // check for "none" as first parameter, if exists return early (this is only applicable for enums)
+                if definitions.is_empty() && ident.to_string() == "none" {
+                    return Ok(CtorStructConfiguration { definitions: Default::default(), is_none: true })
+                }
+                
                 CtorDefinition {
                     visibility: Visibility::Inherited,
-                    ident: input.parse()?,
+                    ident,
                     is_const
                 }
             };
@@ -83,7 +91,7 @@ impl Parse for CtorStructConfiguration {
             }
         }
 
-        Ok(Self { definitions })
+        Ok(Self { definitions, is_none: false })
     }
 }
 
