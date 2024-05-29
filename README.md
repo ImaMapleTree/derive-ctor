@@ -6,11 +6,16 @@
 
 - Automatically generate a constructor method for all fields in a struct with `#[derive(ctor)]`.
 - Customize the name and visibility of the auto-generated constructor using `#[ctor(visibility method_name)]`.
+  - Supports const constructors by adding the "const" keyword.
 - Provide a list of names to generate multiple constructors.
 - Customize field behavior in the constructor with the following attributes:
+  - `#[ctor(cloned)]` - Changes the parameter type to accept a reference type which is then cloned into the created struct.
   - `#[ctor(default)]` - Exclude the field from the generated method and use its default value.
   - `#[ctor(expr(EXPRESSION))]` - Exclude the field from the generated method and use the defined expression as its default value.
-  - `#[ctor(impl)]` - Change the parameter type for the generated method to `impl Into<Type>`.
+    - Use `#[ctor(expr!(EXPRESSION))]` to add the annotated field as a required parameter, allowing the expression to reference itself.
+    - Use `#[ctor(expr(TYPE -> EXPRESSION))]` to add a parameter with the specified type, which will be used to generate the final field value.
+  - `#[ctor(into)]` - Change the parameter type for the generated method to `impl Into<Type>`.
+  - `#[ctor(iter(FROM_TYPE))]` - Change the parameter type for the generated method to `impl IntoIterator<Item=FROM_TYPE>`.
 - Support no-std via `features = ["no-std"]`
 
 ## Basic Usage
@@ -53,7 +58,7 @@ These methods all inherit their respective visibilities defined within the `#[ct
 use derive_ctor::ctor;
 
 #[derive(ctor)]
-#[ctor(pub new, pub(crate) with_defaults, internal)]
+#[ctor(pub new, pub(crate) with_defaults, const internal)]
 struct MyStruct {
     field1: i32,
     field2: String
@@ -64,6 +69,22 @@ struct MyStruct {
 
 Fields can also be annotated with `#[ctor(PROPERTY)]` to change their behaviour in the generated methods.
 The following are the available properties that can be used with the field-attributes
+
+`#[ctor(cloned)]` - This property creates a parameter that accepts a type reference of the annotated field and
+then clones it to generate the final value.
+```rust
+use derive_ctor::ctor;
+
+#[derive(ctor)]
+struct MyStruct {
+    field1: i32,
+    #[ctor(cloned)]
+    field2: String
+}
+
+let string = String::from("Foo");
+let my_struct = MyStruct::new(100, &string);
+```
 
 `#[ctor(default)]` - This property excludes the annotated field from the constructor and uses its default value.
 ```rust
@@ -79,7 +100,7 @@ struct MyStruct {
 let my_struct = MyStruct::new(100);
 ```
 
-`#[ctor(impl)]` - This property modifies the parameter type of the annotated field for the generated method
+`#[ctor(into)]` - This property modifies the parameter type of the annotated field for the generated method
 converting it from `Type` -> `impl Into<Type>`.
 ```rust
 use derive_ctor::ctor;
@@ -87,15 +108,24 @@ use derive_ctor::ctor;
 #[derive(ctor)]
 struct MyStruct {
     field1: i32,
-    #[ctor(impl)] // the parameter type will now be impl Into<String> instead of String
+    #[ctor(into)] // the parameter type will now be impl Into<String> instead of String
     field2: String
 }
 
 let my_struct = MyStruct::new(100, "Foo");
 ```
 
-`#[ctor(expr(VALUE))]` - This property excludes the annotated field from the constructor and utilizes the defined expression
+`#[ctor(expr(EXPRESSION))]` - This property excludes the annotated field from the constructor and utilizes the defined expression
 to generate its value.
+
+**Alternatives:**
+
+- `#[ctor(expr!(EXPRESSION))]` - Unlike the above attribute, this attribute will add the annotated field as a required parameter
+for the given constructor, this allows for the provided EXPRESSION to reference the parameter and modify the passed value.
+- `#[ctor(expr(TYPE -> EXPRESSION))]` - This attribute behaves similar to the variation above, however, the required parameter
+type will be of the type provided in the attribute, thus allowing for a constructor to accept and map a parameter from one type
+to the type used by the struct field.
+
 ```rust
 use derive_ctor::ctor;
 
@@ -103,10 +133,31 @@ use derive_ctor::ctor;
 struct MyStruct {
     field1: i32,
     #[ctor(expr(String::from("Foo")))]
-    field2: String
+    field2: String,
+    #[ctor(expr!(field3 + 100))]
+    field3: u32,
+    #[ctor(expr(i32 -> field4 < 0))]
+    field4: bool
 }
 
-let my_struct = MyStruct::new(100); // generates MyStruct { field1: 100, field2: "foo" }
+let my_struct = MyStruct::new(100, 5, -20); // generates MyStruct { field1: 100, field2: "foo", field3: 105, field4: true }
+```
+
+`#[ctor(iter(TYPE))]` - This property adds a parameter with the type: `impl IntoIterator<Item=TYPE>` and then generates
+the annotated struct value by calling `.into_iter().collect()` on the parameter value.
+
+```rust
+use std::collections::HashSet;
+use derive_ctor::ctor;
+
+#[derive(ctor)]
+struct MyStruct {
+  field1: i32,
+  #[ctor(iter(usize))]
+  field2: HashSet<usize>
+}
+
+let my_struct = MyStruct::new(0, vec![1, 1, 2, 3, 4]);
 ```
 
 ### Advanced Configuration
