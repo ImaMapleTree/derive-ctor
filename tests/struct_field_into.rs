@@ -2,7 +2,7 @@ use derive_ctor::ctor;
 
 #[derive(ctor, Debug, PartialEq)]
 struct StructImpl {
-    #[ctor(impl)]
+    #[ctor(into)]
     provided: String,
     other: bool
 }
@@ -10,9 +10,9 @@ struct StructImpl {
 #[derive(ctor, Debug, PartialEq)]
 struct StructManyImpl {
     provided: bool,
-    #[ctor(impl)]
+    #[ctor(into)]
     one: String,
-    #[ctor(impl)]
+    #[ctor(into)]
     two: String
 }
 

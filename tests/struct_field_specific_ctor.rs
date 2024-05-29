@@ -41,7 +41,7 @@ fn test_struct_with_multiple_targeted_generations() {
 #[derive(ctor, Debug, PartialEq)]
 #[ctor(m1, m2, m3)]
 struct TestStructWithFieldWithMultipleTargets {
-    #[ctor(impl)]
+    #[ctor(into)]
     arg1: String,
     #[ctor(expr(5) = [0, 1])]
     arg2: u32
