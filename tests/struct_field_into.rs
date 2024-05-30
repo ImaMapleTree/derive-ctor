@@ -4,7 +4,7 @@ use derive_ctor::ctor;
 struct StructImpl {
     #[ctor(into)]
     provided: String,
-    other: bool
+    other: bool,
 }
 
 #[derive(ctor, Debug, PartialEq)]
@@ -13,17 +13,30 @@ struct StructManyImpl {
     #[ctor(into)]
     one: String,
     #[ctor(into)]
-    two: String
+    two: String,
 }
 
 #[test]
 fn test_struct_with_impl_value() {
     let test = StructImpl::new("Foo", false);
-    assert_eq!(StructImpl { provided: String::from("Foo"), other: false }, test);
+    assert_eq!(
+        StructImpl {
+            provided: String::from("Foo"),
+            other: false
+        },
+        test
+    );
 }
 
 #[test]
 fn test_struct_with_many_impl() {
     let test = StructManyImpl::new(false, "One", "Two");
-    assert_eq!(StructManyImpl { provided: false, one: String::from("One"), two: String::from("Two") }, test)
+    assert_eq!(
+        StructManyImpl {
+            provided: false,
+            one: String::from("One"),
+            two: String::from("Two")
+        },
+        test
+    )
 }

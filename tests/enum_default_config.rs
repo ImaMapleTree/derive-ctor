@@ -5,7 +5,7 @@ use derive_ctor::ctor;
 enum PrefixEnum {
     Variant1,
     Variant2(i32),
-    Variant3 { value: i32 }
+    Variant3 { value: i32 },
 }
 
 #[test]
@@ -21,7 +21,7 @@ fn test_variants_with_prefix() {
 #[derive(ctor)]
 #[ctor(vis = pub(crate))]
 enum VisibilityEnum {
-    Element
+    Element,
 }
 
 #[test]
@@ -33,7 +33,7 @@ fn test_visibility_enum() {
 #[derive(ctor)]
 #[ctor(prefix = new, visibility = pub(crate))]
 enum PrefixAndVisibilityEnum {
-    Element
+    Element,
 }
 
 #[test]
