@@ -9,7 +9,7 @@ use alloc::string::ToString;
 use std::collections::HashSet;
 
 
-use proc_macro2::{Delimiter, Punct};
+use proc_macro2::{Delimiter, Punct, Span};
 use proc_macro2::Spacing::Alone;
 use quote::{quote, TokenStreamExt, ToTokens};
 use syn::{Error, Ident, LitInt, token, Type, Token};
@@ -54,13 +54,16 @@ pub(crate) enum FieldConfigProperty {
 #[derive(Clone)]
 pub(crate) struct ParameterField {
     pub(crate) field_ident: Ident,
-    pub(crate) field_type: Type
+    pub(crate) field_type: Type,
+    pub(crate) span: Span
 }
 
 #[derive(Clone)]
 pub(crate) struct GeneratedField {
     pub(crate) field_ident: Ident,
-    pub(crate) configuration: FieldConfigProperty
+    pub(crate) configuration: FieldConfigProperty,
+    #[allow(dead_code /*may be used for future purposes*/)]
+    pub(crate) span: Span
 }
 
 impl Parse for FieldConfig {

@@ -18,7 +18,7 @@ fn test_variant_with_configured_ctors() {
 #[derive(ctor, Debug, PartialEq)]
 enum EnumNoVariantGeneration {
     Variant1,
-    #[ctor(none)]
+    #[ctor(none)] #[allow(dead_code)]
     Variant2
 }
 
@@ -34,7 +34,7 @@ enum VariantConfigOverridesDefaults {
     Variant1,
     #[ctor(variant2)]
     Variant2,
-    #[ctor(none)]
+    #[ctor(none)] #[allow(dead_code)]
     Variant3
 }
 

@@ -1,6 +1,14 @@
 #![cfg_attr(feature = "no-std", no_std, doc = "Removes all std library dependencies within library.")]
 #![doc = include_str!("../README.md")]
 
+#[cfg(feature = "no-std")]
+extern crate alloc;
+#[cfg(feature = "no-std")]
+use alloc::format;
+#[cfg(feature = "no-std")]
+use alloc::string::ToString;
+
+
 use proc_macro::TokenStream;
 use proc_macro2::Delimiter;
 use quote::ToTokens;

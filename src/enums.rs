@@ -1,13 +1,22 @@
 use proc_macro::TokenStream;
 
+#[cfg(feature = "no-std")]
+use alloc::string::String;
+#[cfg(feature = "no-std")]
+use alloc::vec;
+#[cfg(feature = "no-std")]
+use alloc::string::ToString;
+#[cfg(feature = "no-std")]
+use alloc::vec::Vec;
+
 use proc_macro2::Span;
-use quote::{quote};
+use quote::quote;
 use syn::{Data, DeriveInput, Error, Fields, Generics, Ident, token, Variant, Visibility};
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::token::{Comma, Pub};
 use crate::{CONFIG_PROP_ERR_MSG, try_parse_attributes_with_default};
-use crate::structs::{CtorDefinition, CtorStructConfiguration, generate_ctor_meta_from_fields};
+use crate::structs::{generate_ctor_meta_from_fields, CtorAttribute, CtorDefinition, CtorStructConfiguration};
 
 static ENUM_CTOR_PROPS: &str = "\"prefix\", \"visibility\", \"vis\"";
 
@@ -35,7 +44,7 @@ impl CtorStructConfiguration {
                 None => variant_name,
                 Some(prefix) => syn::parse_str(&(prefix.to_string() + "_" + &variant_name.to_string())).unwrap()
             },
-            is_const: false,
+            attributes: Default::default(),
         }], is_none: false }
     }
 }
@@ -137,7 +146,7 @@ fn create_ctor_enum_impl(
                 Err(err) => return TokenStream::from(err.to_compile_error())
             };
 
-            let const_tkn = if definition.is_const { quote! { const } } else { quote!{} };
+            let const_tkn = if definition.attributes.contains(&CtorAttribute::Const) { quote! { const } } else { quote!{} };
     
             let enum_generation = if variant_code == 0 {
                 quote! { Self::#variant_name { #(#field_idents),* } }

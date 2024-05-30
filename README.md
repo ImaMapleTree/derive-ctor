@@ -8,14 +8,14 @@
 - Customize the name and visibility of the auto-generated constructor using `#[ctor(visibility method_name)]`.
   - Supports const constructors by adding the "const" keyword.
   - Provide a list of names to generate multiple constructors.
-- Customize field behavior in the constructor with the following attributes:
-  - `#[ctor(cloned)]` - Changes the parameter type to accept a reference type which is then cloned into the created struct.
-  - `#[ctor(default)]` - Exclude the field from the generated method and use its default value.
-  - `#[ctor(expr(EXPRESSION))]` - Exclude the field from the generated method and use the defined expression as its default value.
-    - Use `#[ctor(expr!(EXPRESSION))]` to add the annotated field as a required parameter, allowing the expression to reference itself.
-    - Use `#[ctor(expr(TYPE -> EXPRESSION))]` to add a parameter with the specified type, which will be used to generate the final field value.
-  - `#[ctor(into)]` - Change the parameter type for the generated method to `impl Into<Type>`.
-  - `#[ctor(iter(FROM_TYPE))]` - Change the parameter type for the generated method to `impl IntoIterator<Item=FROM_TYPE>`.
+- Customize field behavior in the constructor with the following properties (used in `#[ctor(PROPETY)])`:
+  - **cloned** - Changes the parameter type to accept a reference type which is then cloned into the created struct.
+  - **default** - Exclude the field from the generated method and use its default value.
+  - **expr(EXPRESSION)** - Exclude the field from the generated method and use the defined expression as its default value.
+    - **expr!(EXPRESSION)** to add the annotated field as a required parameter, allowing the expression to reference itself.
+    - Use **expr(TYPE -> EXPRESSION)** to add a parameter with the specified type, which will be used to generate the final field value.
+  - **into** - Change the parameter type for the generated method to `impl Into<Type>`.
+  - **iter(FROM_TYPE)** - Change the parameter type for the generated method to `impl IntoIterator<Item=FROM_TYPE>`.
 - Support no-std via `features = ["no-std"]`
 
 ## Basic Usage
@@ -24,7 +24,7 @@ Add `derive-ctor` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-derive-ctor = "0.1.1"
+derive-ctor = "0.2.1"
 ```
 
 Import the crate in your Rust code:
@@ -48,6 +48,8 @@ let my_struct = MyStruct::new(1, String::from("Foo"));
 
 ## Struct Configurations
 
+### Visibiltiy and Construtor Name
+
 You can modify the name and visibility of the generated method, and define additional
 constructors by using the `#[ctor]` attribute on the target struct after `ctor` is derived.
 
@@ -58,11 +60,33 @@ These methods all inherit their respective visibilities defined within the `#[ct
 use derive_ctor::ctor;
 
 #[derive(ctor)]
-#[ctor(pub new, pub(crate) with_defaults, const internal)]
+#[ctor(pub new, pub(crate) other, const internal)]
 struct MyStruct {
     field1: i32,
     field2: String
 }
+
+let my_struct1 = MyStruct::new(100, "A".to_string());
+let my_struct2 = MyStruct::other(200, "B".to_string());
+let my_struct3 = MyStruct::internal(300, "C".to_string());
+```
+
+### Auto-implement "Default" Trait
+The `Default` trait can be auto implemented by specifying a ctor with the name "Default" in the ctor attribute. Note: all fields must have a generated value in order for the implementation to be valid.
+
+```rust
+use derive_ctor::ctor;
+
+#[derive(ctor)]
+#[ctor(Default)]
+struct MyStruct {
+    #[ctor(default)]
+    field1: i32,
+    #[ctor(expr(true))]
+    field2: bool
+}
+
+let default: MyStruct = Default::default();
 ```
 
 ## Enum Configurations

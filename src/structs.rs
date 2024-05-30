@@ -5,7 +5,12 @@ use alloc::vec;
 #[cfg(feature = "no-std")]
 use alloc::vec::Vec;
 #[cfg(feature = "no-std")]
+use alloc::collections::BTreeSet as HashSet;
+#[cfg(feature = "no-std")]
+use alloc::string::ToString;
 
+#[cfg(not(feature = "no-std"))]
+use std::collections::HashSet;
 #[cfg(not(feature = "no-std"))]
 use std::vec;
 #[cfg(not(feature = "no-std"))]
@@ -15,6 +20,7 @@ use proc_macro::TokenStream;
 
 use proc_macro2::Span;
 use quote::quote;
+use syn::spanned::Spanned;
 use syn::{parse2, Data, DeriveInput, Error, Fields, Generics, Ident, Visibility};
 use syn::parse::{ParseStream, Parse};
 use syn::token::{Comma, Const, Pub};
@@ -22,10 +28,18 @@ use syn::token::{Comma, Const, Pub};
 use crate::fields::{FieldConfig, FieldConfigProperty, GeneratedField, ParameterField};
 use crate::{is_phantom_data, try_parse_attributes, try_parse_attributes_with_default};
 
+static DEFAULT_CTOR_ERR_MSG: &'static str = "Default constructor requires field to generate its own value.";
+
 pub(crate) struct CtorDefinition {
     pub(crate) visibility: Visibility,
     pub(crate) ident: Ident,
-    pub(crate) is_const: bool
+    pub(crate) attributes: HashSet<CtorAttribute>
+}
+
+#[derive(Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) enum CtorAttribute {
+    Const,
+    Default
 }
 
 impl Default for CtorDefinition {
@@ -33,7 +47,7 @@ impl Default for CtorDefinition {
         Self {
             visibility: Visibility::Public(Pub { span: Span::call_site() }),
             ident: Ident::new("new", Span::mixed_site()),
-            is_const: false
+            attributes: Default::default()
         }
     }
 }
@@ -58,28 +72,38 @@ impl Parse for CtorStructConfiguration {
         let mut definitions = Vec::new();
 
         loop {
-            let mut is_const = input.parse::<Const>().is_ok();
+            let mut attributes = HashSet::new();
+            if input.parse::<Const>().is_ok() {
+                attributes.insert(CtorAttribute::Const);
+            }
 
             let definition = if !input.peek(syn::Ident) {
                 let visibility = input.parse()?;
-                is_const = input.parse::<Const>().is_ok() || is_const; // required to support both: VIS const and const VIS
+                // required to support both: VIS const and const VIS
+                if input.parse::<Const>().is_ok() {
+                    attributes.insert(CtorAttribute::Const);
+                }
                 CtorDefinition {
                     visibility,
                     ident: input.parse()?,
-                    is_const
+                    attributes
                 }
             } else {
                 let ident = input.parse::<Ident>()?;
                 
-                // check for "none" as first parameter, if exists return early (this is only applicable for enums)
-                if definitions.is_empty() && ident.to_string() == "none" {
-                    return Ok(CtorStructConfiguration { definitions: Default::default(), is_none: true })
+                match ident.to_string().as_str() {
+                    // check for "none" as first parameter, if exists return early (this is only applicable for enums)
+                    "none" if definitions.is_empty() => {
+                        return Ok(CtorStructConfiguration { definitions: Default::default(), is_none: true })
+                    },
+                    "Default" => { attributes.insert(CtorAttribute::Default); },
+                    _ => {}
                 }
                 
                 CtorDefinition {
                     visibility: Visibility::Inherited,
                     ident,
-                    is_const
+                    attributes
                 }
             };
 
@@ -128,27 +152,56 @@ fn create_ctor_struct_impl(
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     let mut methods = Vec::new();
+    let mut default_method = None;
     for (i, definition) in configuration.definitions.into_iter().enumerate() {
         let method_req_fields = &meta.parameter_fields[i];
         let method_gen_fields = &meta.generated_fields[i];
 
         let visibility = definition.visibility;
-        let name = definition.ident;
-        let const_tkn = if definition.is_const { quote! { const } } else { quote!{} };
+        let mut name = definition.ident;
+        let const_tkn = if definition.attributes.contains(&CtorAttribute::Const) 
+            { quote! { const } } else { quote!{} };
 
-        methods.push(quote! {
+        let is_default = definition.attributes.contains(&CtorAttribute::Default);
+        if is_default {
+            name = syn::parse_str("default").unwrap();
+        }
+
+        let method_token_stream = quote! {
             #visibility #const_tkn fn #name(#(#method_req_fields),*) -> Self {
                 #(#method_gen_fields)*
                 Self { #(#field_idents),* }
             }
-        })
+        };
+
+        if is_default {
+            if !method_req_fields.is_empty() {
+                let first_error = Error::new(method_req_fields[0].span, DEFAULT_CTOR_ERR_MSG);
+                let errors = method_req_fields.into_iter().skip(1).fold(first_error, |mut e, f| {
+                    e.combine(Error::new(f.span, DEFAULT_CTOR_ERR_MSG));
+                    e
+                });
+                return TokenStream::from(errors.to_compile_error())
+            }
+            default_method = Some(method_token_stream);
+        } else {
+            methods.push(method_token_stream);
+        }
     }
 
+    let default_impl = if let Some(def_method) = default_method {
+        quote! {
+            impl #impl_generics Default for # ident # ty_generics #where_clause {
+                #def_method
+            }
+        }
+    } else { quote!{} };
 
     TokenStream::from(quote! {
         impl #impl_generics #ident #ty_generics #where_clause {
             #(#methods)*
         }
+        #default_impl
     })
 }
 
@@ -174,12 +227,15 @@ pub(crate) fn generate_ctor_meta_from_fields(fields: Fields, method_count: usize
     for (field_index, field) in fields.into_iter().enumerate() {
         let configuration = try_parse_attributes::<FieldConfig>(&field.attrs)?;
 
+        let span = field.span();
+
         let field_ident = field.ident.unwrap_or_else(|| {
-            Ident::new(&("arg".to_owned() + &field_index.to_string()), Span::mixed_site())
+            Ident::new(&("arg".to_string() + &field_index.to_string()), Span::mixed_site())
         });
 
         meta.field_idents.push(field_ident.clone());
 
+        
         for i in 0..method_count {
 
             let field_ident = field_ident.clone();
@@ -214,14 +270,17 @@ pub(crate) fn generate_ctor_meta_from_fields(fields: Fields, method_count: usize
                 }
             }
             
+            
+
             if let Some(cfg) = gen_configuration {
                 meta.generated_fields[i].push(GeneratedField {
                     field_ident: field_ident.clone(),
-                    configuration: cfg
+                    configuration: cfg,
+                    span
                 })
             }
             if let Some(field_type) = req_field_type {
-                meta.parameter_fields[i].push(ParameterField { field_ident, field_type })
+                meta.parameter_fields[i].push(ParameterField { field_ident, field_type, span })
             }
         }
     }
