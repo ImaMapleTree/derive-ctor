@@ -25,7 +25,7 @@ Add `derive-ctor` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-derive-ctor = "0.2.2"
+derive-ctor = "0.2.3"
 ```
 
 Annotate your struct with `#[derive(ctor)]` to automatically generate a `new` constructor:
@@ -68,13 +68,14 @@ let my_struct3 = MyStruct::internal(300, "C".to_string());
 ```
 
 ### Auto-implement "Default" Trait
-The `Default` trait can be auto implemented by specifying a ctor with the name "Default" in the ctor attribute. Note: all fields must have a generated value in order for the implementation to be valid.
+The `Default` trait can be auto implemented by specifying a ctor with the name `default` in the ctor attribute. Note: all fields must have a generated value in order for the implementation to be valid.
+Additionally, declaring `default(all)` will automatically mark all non-annotated fields with `#[ctor(default)]`
 
 ```rust
 use derive_ctor::ctor;
 
 #[derive(ctor)]
-#[ctor(Default)]
+#[ctor(default)]
 struct MyStruct {
     #[ctor(default)]
     field1: i32,
@@ -83,6 +84,17 @@ struct MyStruct {
 }
 
 let default: MyStruct = Default::default();
+
+
+#[derive(ctor)]
+#[ctor(default(all))]
+struct OtherStruct {
+    field1: i32,
+    #[ctor(expr(true))]
+    field2: bool
+}
+
+let default2: OtherStruct = Default::default();
 ```
 
 ## Enum Configurations

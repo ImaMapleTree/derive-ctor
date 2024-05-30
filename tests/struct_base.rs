@@ -15,12 +15,12 @@ pub struct Empty {}
 #[test]
 fn test_empty_struct_no_config() {
     let empty = Empty::new();
-    assert_eq!(Empty { }, empty)
+    assert_eq!(Empty {}, empty)
 }
 
 #[derive(ctor, Debug, PartialEq)]
 pub struct OneFieldStruct {
-    value: u32
+    value: u32,
 }
 
 #[test]
@@ -32,35 +32,45 @@ fn test_struct_with_field() {
 #[derive(ctor, Debug, PartialEq)]
 pub struct ManyFieldStruct {
     value1: u32,
-    value2: bool
+    value2: bool,
 }
 
 #[test]
 fn test_struct_with_many_fields() {
     let mfs = ManyFieldStruct::new(400, true);
-    assert_eq!(ManyFieldStruct { value1: 400, value2: true }, mfs);
+    assert_eq!(
+        ManyFieldStruct {
+            value1: 400,
+            value2: true
+        },
+        mfs
+    );
 }
 
 #[derive(ctor, Debug, PartialEq)]
 pub struct GenericStruct<T> {
-    item: T
+    item: T,
 }
 
 #[derive(ctor, Debug, PartialEq)]
 pub struct WhereStruct<T>
-where T: Into<String> {
-    item: T
+where
+    T: Into<String>,
+{
+    item: T,
 }
 
 #[derive(ctor, Debug, PartialEq)]
 pub struct StructWithClosure {
-    closure: fn(usize) -> bool
+    closure: fn(usize) -> bool,
 }
 
 #[derive(ctor, Debug, PartialEq)]
 pub struct StructWithClosureGeneric<F>
-where F: Fn(usize) -> bool {
-    closure: F
+where
+    F: Fn(usize) -> bool,
+{
+    closure: F,
 }
 
 #[test]
