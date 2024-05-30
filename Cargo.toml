@@ -1,6 +1,6 @@
 [package]
 name = "derive-ctor"
-version = "0.2.1"
+version = "0.2.2"
 description = "Adds `#[derive(ctor)]` which allows for the auto-generation of a constructor."
 keywords = ["derive", "macro", "trait", "procedural", "no_std"]
 authors = ["Evan Cowin"]
@@ -8,14 +8,13 @@ license = "MIT"
 repository = "https://github.com/ImaMapleTree/derive-ctor"
 edition = "2021"
 exclude = [".github/*", ".gitignore"]
+categories = ["no-std", "rust-patterns"]
 
 [lib]
 proc-macro = true
-
-[features]
-no-std = []
 
 [dependencies]
 syn = { version = "2.0.*" }
 quote = { version = "1.*" }
 proc-macro2 = { version = "1.0.*" }
+heck = { version = "0.5.*" }

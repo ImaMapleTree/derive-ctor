@@ -1,9 +1,10 @@
 # derive-ctor
 
-`derive-ctor` is a Rust procedural macro crate that allows you to easily generate constructor methods for your structs. With the `#[derive(ctor)]` attribute, you can automatically create a constructor(s) for structs and enums. The crate also provides various options to customize the generated constructor methods.
+`derive-ctor` is a Rust procedural macro crate that allows you to easily generate constructor methods for your structs.
+With the `#[derive(ctor)]` attribute, you can automatically create a constructor(s) for structs and enums. The crate also
+provides various options to customize the generated constructor methods.
 
 ## Features
-
 - Automatically generate a constructor method for structs and enums with `#[derive(ctor)]`.
 - Customize the name and visibility of the auto-generated constructor using `#[ctor(visibility method_name)]`.
   - Supports const constructors by adding the "const" keyword.
@@ -16,7 +17,7 @@
     - Use **expr(TYPE -> EXPRESSION)** to add a parameter with the specified type, which will be used to generate the final field value.
   - **into** - Change the parameter type for the generated method to `impl Into<Type>`.
   - **iter(FROM_TYPE)** - Change the parameter type for the generated method to `impl IntoIterator<Item=FROM_TYPE>`.
-- Support no-std via `features = ["no-std"]`
+- No reliance on the standard library (no-std out of the box).
 
 ## Basic Usage
 
@@ -24,12 +25,7 @@ Add `derive-ctor` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-derive-ctor = "0.2.1"
-```
-
-Import the crate in your Rust code:
-```rust
-use derive_ctor::ctor;
+derive-ctor = "0.2.2"
 ```
 
 Annotate your struct with `#[derive(ctor)]` to automatically generate a `new` constructor:
@@ -48,7 +44,7 @@ let my_struct = MyStruct::new(1, String::from("Foo"));
 
 ## Struct Configurations
 
-### Visibiltiy and Construtor Name
+### Visibility and Constructor Name
 
 You can modify the name and visibility of the generated method, and define additional
 constructors by using the `#[ctor]` attribute on the target struct after `ctor` is derived.
@@ -91,7 +87,7 @@ let default: MyStruct = Default::default();
 
 ## Enum Configurations
 
-By default a constructor will be generated for each variant. This constructor by default will match the name of its
+By default, a constructor will be generated for each variant. This constructor by default will match the name of its
 respective variant and will be public. This default behaviour can be changed by annotating the enum with
 `#[ctor(prefix = PREFIX, visibility = VISIBILITY)]`. Note that both parameters are optional within the attribute.
 Specifying this attribute will change the **default** generated method for each variant, however, each variant
