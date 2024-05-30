@@ -1,3 +1,8 @@
+#![no_std]
+
+extern crate alloc;
+
+use alloc::string::String;
 use derive_ctor::ctor;
 
 #[derive(ctor, Debug, PartialEq)]
