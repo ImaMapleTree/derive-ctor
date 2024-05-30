@@ -1,12 +1,6 @@
-#[cfg(feature = "no-std")]
 extern crate alloc;
-#[cfg(feature = "no-std")]
 use alloc::collections::BTreeSet as HashSet;
-#[cfg(feature = "no-std")]
 use alloc::string::ToString;
-
-#[cfg(not(feature = "no-std"))]
-use std::collections::HashSet;
 
 
 use proc_macro2::{Delimiter, Punct, Span};

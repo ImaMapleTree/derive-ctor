@@ -1,20 +1,8 @@
-#[cfg(feature = "no-std")]
 extern crate alloc;
-#[cfg(feature = "no-std")]
 use alloc::vec;
-#[cfg(feature = "no-std")]
 use alloc::vec::Vec;
-#[cfg(feature = "no-std")]
 use alloc::collections::BTreeSet as HashSet;
-#[cfg(feature = "no-std")]
 use alloc::string::ToString;
-
-#[cfg(not(feature = "no-std"))]
-use std::collections::HashSet;
-#[cfg(not(feature = "no-std"))]
-use std::vec;
-#[cfg(not(feature = "no-std"))]
-use std::vec::Vec;
 
 use proc_macro::TokenStream;
 

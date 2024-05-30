@@ -1,13 +1,9 @@
 use proc_macro::TokenStream;
 
-#[cfg(feature = "no-std")]
-use alloc::string::String;
-#[cfg(feature = "no-std")]
 use alloc::vec;
-#[cfg(feature = "no-std")]
 use alloc::string::ToString;
-#[cfg(feature = "no-std")]
 use alloc::vec::Vec;
+use heck::ToSnakeCase;
 
 use proc_macro2::Span;
 use quote::quote;
@@ -175,34 +171,16 @@ fn create_ctor_enum_impl(
 }
 
 fn convert_to_snakecase(method_ident: Ident) -> Result<Ident, Error> {
-    let mut snake_case = String::new();
-    let mut was_lower = false;
-
     let ident_string = method_ident.to_string();
-
-    let mut ident_chars = ident_string.chars();
-    loop {
-        let c = match ident_chars.next() {
-            Some(c) if c == '_' => {
-                snake_case.push(c.to_ascii_lowercase());
-                was_lower = false;
-                continue;
-            },
-            Some(c) => c,
-            None => break,
-        };
-
-        let lower_or_numeric = c.is_ascii_lowercase() || c.is_numeric();
-        
-        if was_lower && !lower_or_numeric {
-            snake_case.push('_')
-        }
-        
-        snake_case.push(c.to_ascii_lowercase());
-
-        was_lower = lower_or_numeric;
-    }
-
+    let trimmed_start_str = ident_string.trim_start_matches('_');
+    let trimmed_start_end_str = trimmed_start_str.trim_end_matches('_');
+    
+    let leading_underscore_count = ident_string.len() - trimmed_start_str.len();
+    let trailing_underscore_count = trimmed_start_str.len() - trimmed_start_end_str.len();
+    
+    let snake_case = "_".repeat(leading_underscore_count) 
+        + &ident_string.to_snake_case() + &"_".repeat(trailing_underscore_count);
+    
     syn::parse_str(&snake_case)
 }
 
@@ -213,7 +191,7 @@ fn test_convert_to_snakecase() {
     assert_eq!(convert_to_snakecase(Ident::new("Test1", Span::mixed_site())).unwrap(), Ident::new("test1", Span::mixed_site()));
     assert_eq!(convert_to_snakecase(Ident::new("ONETWO", Span::mixed_site())).unwrap(), Ident::new("onetwo", Span::mixed_site()));
     assert_eq!(convert_to_snakecase(Ident::new("OneTwo", Span::mixed_site())).unwrap(), Ident::new("one_two", Span::mixed_site()));
-    assert_eq!(convert_to_snakecase(Ident::new("_Abc", Span::mixed_site())).unwrap(), Ident::new("_abc", Span::mixed_site()));
+    assert_eq!(convert_to_snakecase(Ident::new("__Abc__", Span::mixed_site())).unwrap(), Ident::new("__abc__", Span::mixed_site()));
     assert_eq!(convert_to_snakecase(Ident::new("A_B", Span::mixed_site())).unwrap(), Ident::new("a_b", Span::mixed_site()));
     assert_eq!(convert_to_snakecase(Ident::new("A_b", Span::mixed_site())).unwrap(), Ident::new("a_b", Span::mixed_site()));
     assert_eq!(convert_to_snakecase(Ident::new("abCdEf", Span::mixed_site())).unwrap(), Ident::new("ab_cd_ef", Span::mixed_site()));
