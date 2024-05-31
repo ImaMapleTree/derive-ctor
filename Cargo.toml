@@ -1,7 +1,7 @@
 [package]
 name = "derive-ctor"
-version = "0.2.3"
-description = "Adds `#[derive(ctor)]` which allows for the auto-generation of struct and enum constructors."
+version = "1.0.0"
+description = "Adds `#[derive(ctor)]` which allows for the auto-generation of struct, enum, and union constructors."
 keywords = ["derive", "macro", "trait", "procedural", "no_std"]
 authors = ["Evan Cowin"]
 license = "MIT"
@@ -11,9 +11,10 @@ exclude = [".github/*", ".gitignore"]
 categories = ["no-std", "rust-patterns"]
 
 [features]
-default = ["structs", "enums"]
+default = ["structs", "enums", "unions"]
 enums = ["dep:heck"]
 structs = []
+unions = []
 
 [lib]
 proc-macro = true

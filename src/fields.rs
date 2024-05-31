@@ -16,9 +16,7 @@ use crate::constants::{
     CONFIG_PROP_ERR_MSG, FIELD_PROP_CLONED as CLONED, FIELD_PROP_DEFAULT as DEFAULT,
     FIELD_PROP_EXPR as EXPR, FIELD_PROP_INTO as INTO, FIELD_PROP_ITER as ITER,
 };
-use crate::structs::CtorAttribute;
-use crate::structs::CtorAttribute::DefaultAll;
-use crate::{consume_delimited, is_phantom_data, try_parse_attributes};
+use crate::{consume_delimited, CtorAttribute, is_phantom_data, try_parse_attributes};
 
 const FIELD_PROPS: &str = "\"cloned\", \"default\", \"expr\", \"into\", \"iter\"";
 
@@ -219,7 +217,7 @@ pub(crate) fn generate_ctor_meta(
         let mut gen_configuration = None;
 
         match &configuration {
-            None if ctor_attributes.contains(&DefaultAll) => {
+            None if ctor_attributes.contains(&CtorAttribute::DefaultAll) => {
                 gen_configuration = Some(FieldConfigProperty::Default)
             }
             None if is_phantom_data(&field.ty) => {

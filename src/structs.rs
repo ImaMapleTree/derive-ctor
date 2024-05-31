@@ -6,42 +6,15 @@ use alloc::vec;
 use alloc::vec::Vec;
 use proc_macro::TokenStream;
 
-use proc_macro2::{Delimiter, Span};
+use proc_macro2::Delimiter;
 use quote::quote;
 use syn::{Data, DeriveInput, Error, Fields, Generics, Ident, Visibility};
 use syn::parse::{Parse, ParseStream};
-use syn::token::{Comma, Const, Pub};
+use syn::token::{Comma, Const};
 
-use CtorAttribute::DefaultAll;
-
-use crate::{consume_delimited, try_parse_attributes_with_default};
+use crate::{consume_delimited, CtorAttribute, CtorDefinition, try_parse_attributes_with_default};
 use crate::constants::{DEFAULT_CTOR_ERR_MSG, ENUM_VARIATION_PROP_NONE as NONE, NESTED_PROP_ALL as ALL, STRUCT_PROP_DEFAULT as DEFAULT};
 use crate::fields::generate_ctor_meta;
-
-pub(crate) struct CtorDefinition {
-    pub(crate) visibility: Visibility,
-    pub(crate) ident: Ident,
-    pub(crate) attrs: HashSet<CtorAttribute>,
-}
-
-#[derive(Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) enum CtorAttribute {
-    Const,
-    DefaultAll,
-    Default,
-}
-
-impl Default for CtorDefinition {
-    fn default() -> Self {
-        Self {
-            visibility: Visibility::Public(Pub {
-                span: Span::call_site(),
-            }),
-            ident: Ident::new("new", Span::mixed_site()),
-            attrs: Default::default(),
-        }
-    }
-}
 
 pub(crate) struct CtorStructConfiguration {
     pub(crate) definitions: Vec<CtorDefinition>,
@@ -99,7 +72,7 @@ impl Parse for CtorStructConfiguration {
                                 Ok(buffer.parse::<Ident>()?.to_string() == ALL)
                             })
                         {
-                            attributes.insert(DefaultAll);
+                            attributes.insert(CtorAttribute::DefaultAll);
                         }
                         attributes.insert(CtorAttribute::Default);
                     }
@@ -128,13 +101,6 @@ impl Parse for CtorStructConfiguration {
     }
 }
 
-#[cfg(not(feature = "structs"))]
-pub(crate) fn create_struct_token_stream(derive_input: DeriveInput) -> TokenStream {
-    TokenStream::from(Error::new(Span::call_site(),
-        "\"structs\" feature must be enabled to use #[derive(ctor)] on structs.").to_compile_error())
-}
-
-#[cfg(feature = "structs")]
 pub(crate) fn create_struct_token_stream(derive_input: DeriveInput) -> TokenStream {
     if let Data::Struct(data) = derive_input.data {
         let configuration = match try_parse_attributes_with_default(&derive_input.attrs, || {

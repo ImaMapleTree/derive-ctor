@@ -1,31 +1,89 @@
 #![no_std]
 #![doc = include_str!("../README.md")]
+#![allow(dead_code)]
 
 extern crate alloc;
 use alloc::format;
 use alloc::string::ToString;
+use alloc::collections::BTreeSet as HashSet;
 
 use crate::constants::CTOR_WORD;
+#[cfg(feature = "enums")]
 use crate::enums::create_enum_token_stream;
+#[cfg(feature = "structs")]
+use crate::structs::create_struct_token_stream;
+#[cfg(feature = "unions")]
+use crate::unions::create_union_token_stream;
+
 use proc_macro::TokenStream;
-use proc_macro2::Delimiter;
+use proc_macro2::{Delimiter, Ident, Span};
 use quote::ToTokens;
-use structs::create_struct_token_stream;
 use syn::parse::discouraged::AnyDelimiter;
 use syn::parse::Parse;
 use syn::parse::ParseStream;
-use syn::parse_macro_input;
+use syn::{parse_macro_input, Visibility};
 use syn::spanned::Spanned;
 use syn::Attribute;
 use syn::Data;
 use syn::DeriveInput;
 use syn::Error;
+use syn::token::Pub;
 use syn::Type;
 
+
 pub(crate) mod constants;
+#[cfg(feature = "enums")]
 pub(crate) mod enums;
+#[cfg(any(feature = "enums", feature = "structs", feature = "unions"))]
 pub(crate) mod fields;
+#[cfg(feature = "structs")]
 pub(crate) mod structs;
+#[cfg(feature = "unions")]
+pub(crate) mod unions;
+
+pub(crate) struct CtorDefinition {
+    pub(crate) visibility: Visibility,
+    pub(crate) ident: Ident,
+    pub(crate) attrs: HashSet<CtorAttribute>,
+}
+
+#[derive(Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) enum CtorAttribute {
+    Const,
+    DefaultAll,
+    Default,
+}
+
+impl Default for CtorDefinition {
+    fn default() -> Self {
+        Self {
+            visibility: Visibility::Public(Pub {
+                span: Span::call_site(),
+            }),
+            ident: Ident::new("new", Span::mixed_site()),
+            attrs: Default::default(),
+        }
+    }
+}
+
+#[cfg(not(feature = "enums"))]
+pub(crate) fn create_enum_token_stream(_derive_input: DeriveInput) -> TokenStream {
+    use proc_macro2::Span;
+    TokenStream::from(Error::new(Span::call_site(),
+        "\"enums\" feature must be enabled to use #[derive(ctor)] on enums.").to_compile_error())
+}
+
+#[cfg(not(feature = "structs"))]
+pub(crate) fn create_struct_token_stream(_derive_input: DeriveInput) -> TokenStream {
+    TokenStream::from(Error::new(Span::call_site(),
+        "\"structs\" feature must be enabled to use #[derive(ctor)] on structs.").to_compile_error())
+}
+
+#[cfg(not(feature = "unions"))]
+pub(crate) fn create_union_token_stream(_derive_input: DeriveInput) -> TokenStream {
+    TokenStream::from(Error::new(Span::call_site(),
+        "\"unions\" feature must be enabled to use #[derive(ctor)] on unions.").to_compile_error())
+}
 
 #[proc_macro_derive(ctor, attributes(ctor))]
 pub fn derive_ctor(input: TokenStream) -> TokenStream {
@@ -34,9 +92,7 @@ pub fn derive_ctor(input: TokenStream) -> TokenStream {
     match &derive_input.data {
         Data::Struct(_) => create_struct_token_stream(derive_input),
         Data::Enum(_) => create_enum_token_stream(derive_input),
-        Data::Union(_) => TokenStream::from(
-            Error::new(derive_input.span(), "Unions are not yet supported by ctor").to_compile_error(),
-        ),
+        Data::Union(_) => create_union_token_stream(derive_input)
     }
 }
 
