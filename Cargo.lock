@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "derive-ctor"
-version = "0.2.3"
+version = "1.0.0"
 dependencies = [
  "heck",
  "proc-macro2",

@@ -4,21 +4,21 @@ use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
 
-#[cfg(feature = "enums")]
 use heck::ToSnakeCase;
 
 use crate::constants::{CONFIG_PROP_ERR_MSG, ENUM_PROP_VIS as VIS, ENUM_PROP_VISIBILITY as VISIBILITY, ENUM_PROP_PREFIX as PREFIX};
-use crate::structs::{CtorAttribute, CtorDefinition, CtorStructConfiguration, };
-use crate::try_parse_attributes_with_default;
+use crate::structs::CtorStructConfiguration;
+use crate::{CtorAttribute, CtorDefinition, try_parse_attributes_with_default};
+use crate::fields::generate_ctor_meta;
+
 use proc_macro2::Span;
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::token::{Comma, Pub};
 use syn::{token, Data, DeriveInput, Error, Fields, Generics, Ident, Variant, Visibility};
-use crate::fields::generate_ctor_meta;
 
-static ENUM_CTOR_PROPS: &str = "\"prefix\", \"visibility\", \"vis\"";
+const ENUM_CTOR_PROPS: &str = "\"prefix\", \"visibility\", \"vis\"";
 
 enum EnumConfigItem {
     Visibility { visibility: Visibility },
@@ -98,14 +98,6 @@ impl Parse for EnumConfigItem {
     }
 }
 
-#[cfg(not(feature = "enums"))]
-pub(crate) fn create_enum_token_stream(derive_input: DeriveInput) -> TokenStream {
-    use syn::spanned::Spanned;
-    TokenStream::from(Error::new(Span::call_site(),
-        "\"enums\" feature must be enabled to use #[derive(ctor)] on enums.").to_compile_error())
-}
-
-#[cfg(feature = "enums")]
 pub(crate) fn create_enum_token_stream(derive_input: DeriveInput) -> TokenStream {
     if let Data::Enum(data) = derive_input.data {
         let configuration = match try_parse_attributes_with_default(&derive_input.attrs, || { 
@@ -125,7 +117,6 @@ pub(crate) fn create_enum_token_stream(derive_input: DeriveInput) -> TokenStream
     panic!("Expected Enum data")
 }
 
-#[cfg(feature = "enums")]
 fn create_ctor_enum_impl(
     ident: Ident,
     generics: Generics,
@@ -202,7 +193,6 @@ fn create_ctor_enum_impl(
     })
 }
 
-#[cfg(feature = "enums")]
 fn convert_to_snakecase(method_ident: Ident) -> Result<Ident, Error> {
     let ident_string = method_ident.to_string();
     let trimmed_start_str = ident_string.trim_start_matches('_');
@@ -218,7 +208,7 @@ fn convert_to_snakecase(method_ident: Ident) -> Result<Ident, Error> {
     syn::parse_str(&snake_case)
 }
 
-#[test] #[cfg(feature = "enums")]
+#[test]
 fn test_convert_to_snakecase() {
     assert_eq!(
         convert_to_snakecase(Ident::new("A", Span::mixed_site())).unwrap(),

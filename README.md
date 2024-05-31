@@ -1,11 +1,11 @@
 # derive-ctor
 
-`derive-ctor` is a Rust procedural macro crate that allows you to easily generate constructor methods for your structs.
-With the `#[derive(ctor)]` attribute, you can automatically create a constructor(s) for structs and enums. The crate also
+**derive-ctor** is a Rust procedural macro crate that allows you to easily generate constructor methods for your structs.
+With the `#[derive(ctor)]` attribute, you can automatically create a constructor(s) for structs, enums, and unions. The crate also
 provides various options to customize the generated constructor methods.
 
 ## Features
-- Automatically generate a constructor method for structs and enums with `#[derive(ctor)]`.
+- Automatically generate a constructor method for structs, enums, and unions with `#[derive(ctor)]`.
 - Customize the name and visibility of the auto-generated constructor using `#[ctor(visibility method_name)]`.
   - Supports const constructors by adding the "const" keyword.
   - Provide a list of names to generate multiple constructors.
@@ -25,7 +25,7 @@ Add `derive-ctor` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-derive-ctor = "0.2.3"
+derive-ctor = "1.0.0"
 ```
 
 Annotate your struct with `#[derive(ctor)]` to automatically generate a `new` constructor:
@@ -97,7 +97,7 @@ struct OtherStruct {
 let default2: OtherStruct = Default::default();
 ```
 
-## Enum Configurations
+## Enum and Union Configurations
 
 By default, a constructor will be generated for each variant. This constructor by default will match the name of its
 respective variant and will be public. This default behaviour can be changed by annotating the enum with
@@ -145,6 +145,27 @@ let v3 = MyEnum::new_variant3();
 ```
 
 If a variant is derived with `#[ctor(none)]` it will **not** have a constructor generated for it.
+
+Unions express the same behaviours as enums except applicable to the fields of the union rather than the variants of
+an enum.
+
+```rust
+use derive_ctor::ctor;
+
+#[derive(ctor)]
+#[ctor(prefix = new, vis = pub(crate))]
+union MyUnion {
+    #[ctor(const new)]
+    v1: i32,
+    v2: f32,
+    v3: u32
+}
+
+const VAL: MyUnion = MyUnion::new(100);
+let v2 = MyUnion::new_v2(123.231);
+let v3 = MyUnion::new_v3(414224); 
+```
+
 
 ## Field Configurations
 
