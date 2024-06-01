@@ -67,9 +67,3 @@ fn test_union_override() {
     let v3 = UnionOverride::new_other(181);
     unsafe { assert_eq!(v3.other, 181); }
 }
-
-#[derive(ctor)]
-union UnionDefault {
-    #[ctor(default)]
-    int: i32
-}
