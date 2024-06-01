@@ -8,7 +8,7 @@ use heck::ToSnakeCase;
 
 use crate::constants::{CONFIG_PROP_ERR_MSG, ENUM_PROP_VIS as VIS, ENUM_PROP_VISIBILITY as VISIBILITY, ENUM_PROP_PREFIX as PREFIX};
 use crate::structs::CtorStructConfiguration;
-use crate::{CtorAttribute, CtorDefinition, try_parse_attributes_with_default};
+use crate::{adjust_keyword_ident, CtorAttribute, CtorDefinition, try_parse_attributes_with_default};
 use crate::fields::generate_ctor_meta;
 
 use proc_macro2::Span;
@@ -205,7 +205,7 @@ fn convert_to_snakecase(method_ident: Ident) -> Result<Ident, Error> {
         + &ident_string.to_snake_case()
         + &"_".repeat(trailing_underscore_count);
 
-    syn::parse_str(&snake_case)
+    syn::parse_str(&adjust_keyword_ident(snake_case))
 }
 
 #[test]

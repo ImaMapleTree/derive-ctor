@@ -25,7 +25,7 @@ Add `derive-ctor` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-derive-ctor = "1.0.0"
+derive-ctor = "1.0.1"
 ```
 
 Annotate your struct with `#[derive(ctor)]` to automatically generate a `new` constructor:
@@ -161,7 +161,7 @@ union MyUnion {
     v3: u32
 }
 
-const VAL: MyUnion = MyUnion::new(100);
+const VAL地震: MyUnion = MyUnion::new(100);
 let v2 = MyUnion::new_v2(123.231);
 let v3 = MyUnion::new_v3(414224); 
 ```

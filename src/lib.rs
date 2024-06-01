@@ -4,7 +4,7 @@
 
 extern crate alloc;
 use alloc::format;
-use alloc::string::ToString;
+use alloc::string::{String, ToString};
 use alloc::collections::BTreeSet as HashSet;
 
 use crate::constants::CTOR_WORD;
@@ -143,9 +143,24 @@ where
     expression(&buffer)
 }
 
+pub(crate) fn adjust_keyword_ident(name: String) -> String {
+    if syn::parse_str::<Ident>(&name).is_ok() {
+        return name;
+    }
+    format!("r#{}", name)
+}
+
 #[test]
 fn test_is_phantom_data() {
     assert!(is_phantom_data(&syn::parse_str::<Type>("PhantomData").unwrap()));
     assert!(is_phantom_data(&syn::parse_str::<Type>("&mut PhantomData<&'static str>").unwrap()));
     assert!(!is_phantom_data(&syn::parse_str::<Type>("i32").unwrap()));
+}
+
+#[test]
+fn test_adjust_keyword_ident() {
+    assert_eq!("abc".to_string(), adjust_keyword_ident("abc".to_string()));
+    assert_eq!("r#break".to_string(), adjust_keyword_ident("break".to_string()));
+    assert_eq!("r#fn".to_string(), adjust_keyword_ident("fn".to_string()));
+    assert_eq!("r#const".to_string(), adjust_keyword_ident("const".to_string()));
 }

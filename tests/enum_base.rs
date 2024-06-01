@@ -45,3 +45,20 @@ fn test_enum_multiple_variants() {
     let v3 = MultipleVariants::variant3(888);
     assert_eq!(MultipleVariants::Variant3 { value: 888 }, v3);
 }
+
+
+#[derive(ctor, Debug, PartialEq)]
+enum KeywordVariants {
+    Break,
+    Continue,
+    Return,
+    Fn
+}
+
+#[test]
+fn test_enum_with_keyword_names() {
+    assert_eq!(KeywordVariants::Break, KeywordVariants::r#break());
+    assert_eq!(KeywordVariants::Continue, KeywordVariants::r#continue());
+    assert_eq!(KeywordVariants::Return, KeywordVariants::r#return());
+    assert_eq!(KeywordVariants::Fn, KeywordVariants::r#fn());
+}
