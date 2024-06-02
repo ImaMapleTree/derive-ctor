@@ -25,7 +25,7 @@ Add `derive-ctor` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-derive-ctor = "1.0.1"
+derive-ctor = "1.0.2"
 ```
 
 Annotate your struct with `#[derive(ctor)]` to automatically generate a `new` constructor:
@@ -105,7 +105,7 @@ respective variant and will be public. This default behaviour can be changed by 
 Specifying this attribute will change the **default** generated method for each variant, however, each variant
 can additionally define its own configuration which overrides the one defined by the enum.
 
-### Default variant constructor example
+### Standard variant constructor example
 
 ```rust
 use derive_ctor::ctor;
@@ -144,7 +144,9 @@ let v2 = MyEnum::new_variant2();
 let v3 = MyEnum::new_variant3();
 ```
 
-If a variant is derived with `#[ctor(none)]` it will **not** have a constructor generated for it.
+If a variant is derived with `#[ctor(none)]` it will **not** have a constructor generated for it. Similarly,
+if a variant is derived with `#[ctor(default)]` the `Default` trait will be automatically implemented to generate
+that variant.
 
 Unions express the same behaviours as enums except applicable to the fields of the union rather than the variants of
 an enum.
@@ -161,7 +163,7 @@ union MyUnion {
     v3: u32
 }
 
-const VAL地震: MyUnion = MyUnion::new(100);
+const VAL: MyUnion = MyUnion::new(100);
 let v2 = MyUnion::new_v2(123.231);
 let v3 = MyUnion::new_v3(414224); 
 ```

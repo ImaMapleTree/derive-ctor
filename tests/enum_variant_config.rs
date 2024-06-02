@@ -50,3 +50,34 @@ fn test_variant_config_overrides_default_values() {
 
     // variant3 was not generated
 }
+
+
+
+
+#[derive(ctor, Debug, PartialEq)]
+enum DefaultVariantEnum {
+    #[allow(dead_code)]
+    Variant1,
+    #[ctor(default)]
+    Variant2 { #[ctor(default)] value: i32 }
+}
+
+#[test]
+fn test_default_variant_enum() {
+    let variant2 = Default::default();
+    assert_eq!(DefaultVariantEnum::Variant2 { value: 0 }, variant2);
+}
+
+#[derive(ctor, Debug, PartialEq)]
+enum DefaultAllEnum {
+    #[allow(dead_code)]
+    Variant1,
+    #[ctor(default(all))]
+    Variant2 { value: i32, #[ctor(expr("A".to_string()))] other: String }
+}
+
+#[test]
+fn test_default_all_variant_enum() {
+    let variant2 = Default::default();
+    assert_eq!(DefaultAllEnum::Variant2 { value: 0, other: "A".to_string() }, variant2)
+}
