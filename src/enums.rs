@@ -124,6 +124,7 @@ fn create_ctor_enum_impl(
     configuration: CtorEnumConfiguration,
 ) -> TokenStream {
     let mut methods = Vec::new();
+    let mut default_method = None;
 
     for variant in variants {
         let variant_code = match &variant.fields {
@@ -174,22 +175,39 @@ fn create_ctor_enum_impl(
             } else {
                 quote! { Self::#variant_name }
             };
-
-            methods.push(quote! {
+            
+            let method_token_stream = quote! {
                 #visibility #const_tkn fn #name(#(#parameter_fields),*) -> Self {
                     #(#generated_fields)*
                     #enum_generation
                 }
-            })
+            };
+
+            if def.attrs.contains(&CtorAttribute::Default) {
+                default_method = Some(method_token_stream);
+            } else {
+                methods.push(method_token_stream);
+            }
         }
     }
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
+    let default_impl = if let Some(def_method) = default_method {
+        quote! {
+            impl #impl_generics Default for # ident # ty_generics #where_clause {
+                #def_method
+            }
+        }
+    } else {
+        quote! {}
+    };
+    
     TokenStream::from(quote! {
         impl #impl_generics #ident #ty_generics #where_clause {
             #(#methods)*
         }
+        #default_impl
     })
 }
 

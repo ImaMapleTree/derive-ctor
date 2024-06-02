@@ -1,6 +1,6 @@
 [package]
 name = "derive-ctor"
-version = "1.0.1"
+version = "1.0.2"
 description = "Adds `#[derive(ctor)]` which allows for the auto-generation of struct, enum, and union constructors."
 keywords = ["derive", "macro", "trait", "procedural", "no_std"]
 authors = ["Evan Cowin"]
