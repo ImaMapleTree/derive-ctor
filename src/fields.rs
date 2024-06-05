@@ -111,6 +111,37 @@ impl Parse for FieldConfig {
     }
 }
 
+impl FieldConfigProperty {
+    pub fn parse_expr(input: ParseStream) -> syn::Result<Self> {
+        let self_referencing = input.parse::<Token![!]>().is_ok();
+
+        consume_delimited(input, Delimiter::Parenthesis, |buffer| {
+            let mut input_type = None;
+
+            // determine the input_type by looking for the expression: expr(TYPE -> EXPRESSION)
+            if buffer.peek2(Token![->]) {
+                input_type = Some(buffer.parse()?);
+                buffer.parse::<Token![->]>()?;
+            }
+
+            Ok(FieldConfigProperty::Expression { self_referencing, input_type,
+                expression: proc_macro2::TokenStream::parse(&buffer)
+                    .expect("Unable to convert buffer back into TokenStream")
+            })
+        })
+    }
+    
+    pub fn is_generated(&self) -> bool {
+        match self {
+            FieldConfigProperty::Cloned => false,
+            FieldConfigProperty::Default => true,
+            FieldConfigProperty::Into => false,
+            FieldConfigProperty::Iter { .. } => false,
+            FieldConfigProperty::Expression { .. } => true
+        }
+    }
+}
+
 impl Parse for FieldConfigProperty {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         if let Ok(token) = input.parse::<Impl>() {
@@ -129,24 +160,7 @@ impl Parse for FieldConfigProperty {
             ITER => consume_delimited(input, Delimiter::Parenthesis, |buffer| {
                 Ok(FieldConfigProperty::Iter { iter_type: buffer.parse()? })
             }),
-            EXPR => {
-                let self_referencing = input.parse::<Token![!]>().is_ok();
-
-                consume_delimited(input, Delimiter::Parenthesis, |buffer| {
-                    let mut input_type = None;
-
-                    // determine the input_type by looking for the expression: expr(TYPE -> EXPRESSION)
-                    if buffer.peek2(Token![->]) {
-                        input_type = Some(buffer.parse()?);
-                        buffer.parse::<Token![->]>()?;
-                    }
-
-                    Ok(FieldConfigProperty::Expression { self_referencing, input_type,
-                        expression: proc_macro2::TokenStream::parse(&buffer)
-                            .expect("Unable to convert buffer back into TokenStream")
-                    })
-                })
-            },
+            EXPR => Self::parse_expr(input),
             "method" => Err(Error::new(
                 property.span(),
                 "\"method\" property has been removed. Please refer to documentation for a list of valid properties."
@@ -215,15 +229,20 @@ pub(crate) fn generate_ctor_meta(
 
         let mut req_field_type = None;
         let mut gen_configuration = None;
+        let is_default_all = ctor_attributes.contains(&CtorAttribute::DefaultAll);
 
         match &configuration {
-            None if ctor_attributes.contains(&CtorAttribute::DefaultAll) => {
+            None if is_default_all => {
                 gen_configuration = Some(FieldConfigProperty::Default)
             }
             None if is_phantom_data(&field.ty) => {
                 gen_configuration = Some(FieldConfigProperty::Default)
             }
             None => req_field_type = Some(field.ty.clone()),
+            // default(all) should generate a property if the property is a non-generated one
+            Some(configuration) if !configuration.property.is_generated() && is_default_all => {
+                gen_configuration = Some(FieldConfigProperty::Default)
+            }
             Some(configuration) => {
                 let applications = &configuration.applications;
                 gen_configuration = Some(configuration.property.clone());
