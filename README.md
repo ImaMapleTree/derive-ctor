@@ -25,7 +25,7 @@ Add `derive-ctor` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-derive-ctor = "1.0.2"
+derive-ctor = "1.0.3"
 ```
 
 Annotate your struct with `#[derive(ctor)]` to automatically generate a `new` constructor:

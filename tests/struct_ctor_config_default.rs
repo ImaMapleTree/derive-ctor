@@ -61,6 +61,8 @@ struct ImplementDefaultAllMembers {
     value: u32,
     #[ctor(expr(NoDefault {}))]
     no_default: NoDefault,
+    #[ctor(into)]
+    provided: String
 }
 
 #[test]
@@ -70,7 +72,8 @@ fn test_struct_implement_default_all_members() {
         ImplementDefaultAllMembers {
             name: Default::default(),
             value: Default::default(),
-            no_default: NoDefault {}
+            no_default: NoDefault {},
+            provided: Default::default()
         },
         result
     );
