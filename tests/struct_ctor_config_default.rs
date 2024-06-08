@@ -62,7 +62,9 @@ struct ImplementDefaultAllMembers {
     #[ctor(expr(NoDefault {}))]
     no_default: NoDefault,
     #[ctor(into)]
-    provided: String
+    provided: String,
+    #[ctor(expr!(adjusted - 10))]
+    adjusted: i32
 }
 
 #[test]
@@ -73,8 +75,10 @@ fn test_struct_implement_default_all_members() {
             name: Default::default(),
             value: Default::default(),
             no_default: NoDefault {},
-            provided: Default::default()
+            provided: Default::default(),
+            adjusted: 0,
         },
         result
     );
 }
+
