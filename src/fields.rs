@@ -137,7 +137,7 @@ impl FieldConfigProperty {
             FieldConfigProperty::Default => true,
             FieldConfigProperty::Into => false,
             FieldConfigProperty::Iter { .. } => false,
-            FieldConfigProperty::Expression { .. } => true
+            FieldConfigProperty::Expression { self_referencing, .. } => !self_referencing
         }
     }
 }
