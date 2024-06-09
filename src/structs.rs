@@ -13,7 +13,7 @@ use syn::parse::{Parse, ParseStream};
 use syn::token::{Comma, Const};
 
 use crate::{consume_delimited, CtorAttribute, CtorDefinition, try_parse_attributes_with_default};
-use crate::constants::{DEFAULT_CTOR_ERR_MSG, ENUM_VARIATION_PROP_NONE as NONE, NESTED_PROP_ALL as ALL, STRUCT_PROP_DEFAULT as DEFAULT};
+use crate::constants::{DEFAULT_CTOR_ERR_MSG, ENUM_VARIATION_PROP_NONE as NONE, NESTED_PROP_ALL as ALL, STRUCT_PROP_DEFAULT as DEFAULT, STRUCT_PROP_INTO as INTO};
 use crate::fields::generate_ctor_meta;
 
 pub(crate) struct CtorStructConfiguration {
@@ -69,7 +69,7 @@ impl Parse for CtorStructConfiguration {
                     DEFAULT => {
                         if let Ok(true) =
                             consume_delimited(input, Delimiter::Parenthesis, |buffer| {
-                                Ok(buffer.parse::<Ident>()?.to_string() == ALL)
+                                Ok(buffer.parse::<Ident>()? == ALL)
                             })
                         {
                             attributes.insert(CtorAttribute::DefaultAll);
@@ -77,6 +77,19 @@ impl Parse for CtorStructConfiguration {
                         attributes.insert(CtorAttribute::Default);
                     }
                     _ => {}
+                }
+                
+                if let Ok(Some(attribute)) = consume_delimited(input, Delimiter::Parenthesis, |buffer| {
+                    let ident = buffer.parse::<Ident>()?;
+                    if ident == DEFAULT {
+                        return Ok(Some(CtorAttribute::DefaultAll))
+                    }
+                    if ident == INTO {
+                        return Ok(Some(CtorAttribute::IntoAll))
+                    }
+                    Ok(None)
+                }) {
+                    attributes.insert(attribute);
                 }
 
                 CtorDefinition {

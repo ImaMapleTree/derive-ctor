@@ -26,6 +26,7 @@ pub(crate) const ENUM_PROP_VIS: &str = "vis";
 pub(crate) const ENUM_VARIATION_PROP_NONE: &str = "none";
 
 // struct config properties
+pub(crate) const STRUCT_PROP_INTO: &str = "into";
 pub(crate) const STRUCT_PROP_DEFAULT: &str = "default";
 // property used within the default() prop
 pub(crate) const NESTED_PROP_ALL: &str = "all";
