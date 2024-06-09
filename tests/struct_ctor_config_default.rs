@@ -82,3 +82,20 @@ fn test_struct_implement_default_all_members() {
     );
 }
 
+#[derive(ctor, Debug, PartialEq)]
+#[ctor(with_defaults(default), new(into))]
+struct CtorNestedProperties {
+    name: String,
+    #[ctor(expr!(value + 1))]
+    value: u32
+}
+
+#[test]
+fn test_struct_with_nested_properties() {
+    let test1 = CtorNestedProperties::with_defaults();
+    assert_eq!(CtorNestedProperties { name: String::default(), value: 0 }, test1);
+    
+    let test2 = CtorNestedProperties::new("FooBar", 30);
+    assert_eq!(CtorNestedProperties { name: String::from("FooBar"), value: 31 },  test2)
+    
+}

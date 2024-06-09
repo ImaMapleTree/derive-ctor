@@ -25,7 +25,7 @@ Add `derive-ctor` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-derive-ctor = "1.0.4"
+derive-ctor = "1.0.5"
 ```
 
 Annotate your struct with `#[derive(ctor)]` to automatically generate a `new` constructor:
@@ -95,6 +95,26 @@ struct OtherStruct {
 }
 
 let default2: OtherStruct = Default::default();
+```
+
+### Constructor Properties
+Custom constructor definitions can also take one of the following properties to implement on all non-configured fields
+- **default** - Marks all non-annotated fields as `#[ctor(default)]`
+- **into** - Marks all non-annotated fields as `#[ctor(into)]`
+
+```rust
+use derive_ctor::ctor;
+
+#[derive(ctor)]
+#[ctor(new(into), with_defaults(default))]
+struct MyStruct {
+    name: String,
+    #[ctor(expr(13))]
+    value: i32
+}
+
+let example1 = MyStruct::new("FooBar");
+let example2 = MyStruct::with_defaults();
 ```
 
 ## Enum and Union Configurations

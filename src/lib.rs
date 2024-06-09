@@ -52,6 +52,7 @@ pub(crate) enum CtorAttribute {
     Const,
     DefaultAll,
     Default,
+    IntoAll,
 }
 
 impl Default for CtorDefinition {

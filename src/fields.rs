@@ -230,10 +230,15 @@ pub(crate) fn generate_ctor_meta(
         let mut req_field_type = None;
         let mut gen_configuration = None;
         let is_default_all = ctor_attributes.contains(&CtorAttribute::DefaultAll);
+        let is_into_all = ctor_attributes.contains(&CtorAttribute::IntoAll);
 
         match &configuration {
             None if is_default_all => {
                 gen_configuration = Some(FieldConfigProperty::Default)
+            }
+            None if is_into_all => {
+                req_field_type = Some(parse2(quote! { impl Into<#ft> }).expect("Could not parse `Into` type"));
+                gen_configuration = Some(FieldConfigProperty::Into)
             }
             None if is_phantom_data(&field.ty) => {
                 gen_configuration = Some(FieldConfigProperty::Default)
@@ -250,12 +255,12 @@ pub(crate) fn generate_ctor_meta(
                 if applications.is_empty() || applications.contains(&ctor_index) {
                     // create a required field type if the configuration requires an additional input parameter
                     req_field_type = match &configuration.property {
-                        FieldConfigProperty::Cloned => Some(parse2(quote! { &#ft }).unwrap()),
+                        FieldConfigProperty::Cloned => Some(parse2(quote! { &#ft }).expect("Could not parse ref type")),
                         FieldConfigProperty::Into => {
-                            Some(parse2(quote! { impl Into<#ft> }).unwrap())
+                            Some(parse2(quote! { impl Into<#ft> }).expect("Could not parse `Into` type"))
                         }
                         FieldConfigProperty::Iter { iter_type } => {
-                            Some(parse2(quote! { impl IntoIterator<Item=#iter_type> }).unwrap())
+                            Some(parse2(quote! { impl IntoIterator<Item=#iter_type> }).expect("Could not parse `IntoIterator` type"))
                         }
                         FieldConfigProperty::Expression { input_type, .. }
                             if input_type.is_some() =>
