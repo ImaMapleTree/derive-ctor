@@ -18,6 +18,7 @@ provides various options to customize the generated constructor methods.
   - **into** - Change the parameter type for the generated method to `impl Into<Type>`.
   - **iter(FROM_TYPE)** - Change the parameter type for the generated method to `impl IntoIterator<Item=FROM_TYPE>`.
 - No reliance on the standard library (no-std out of the box).
+- Usability with structs, enums, and unions are toggleable as features (all are enabled by default)
 
 ## Basic Usage
 
@@ -25,7 +26,7 @@ Add `derive-ctor` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-derive-ctor = "1.0.5"
+derive-ctor = "1.0.6"
 ```
 
 Annotate your struct with `#[derive(ctor)]` to automatically generate a `new` constructor:
@@ -277,9 +278,9 @@ use derive_ctor::ctor;
 
 #[derive(ctor)]
 struct MyStruct {
-  field1: i32,
-  #[ctor(iter(usize))]
-  field2: HashSet<usize>
+    field1: i32,
+    #[ctor(iter(usize))]
+    field2: HashSet<usize>
 }
 
 let my_struct = MyStruct::new(0, vec![1, 1, 2, 3, 4]);
@@ -296,17 +297,33 @@ use derive_ctor::ctor;
 #[derive(ctor)]
 #[ctor(new, with_defaults)]
 struct MyStruct {
-  field1: i32,
-  #[ctor(default = [1])]
-  field2: String,
-  #[ctor(default = 1)] // brackets can be removed if specifying only 1 index
-  field3: bool,
-  #[ctor(default = [0, 1])]
-  field4: u64,
-  #[ctor(default)] // this is the same as specifying all indices
-  field5: u64
+    field1: i32,
+    #[ctor(default = [1])]
+    field2: String,
+    #[ctor(default = 1)] // brackets can be removed if specifying only 1 index
+    field3: bool,
+    #[ctor(default = [0, 1])]
+    field4: u64,
+    #[ctor(default)] // this is the same as specifying all indices
+    field5: u64
 }
 
 let my_struct1 = MyStruct::new(100, "Foo".to_string(), true);
 let my_struct2 = MyStruct::with_defaults(100);
+```
+
+### Non-Default Features
+
+**shorthand** - Allows the usage of "shorthand" attributes on fields. For example, instead of `#[ctor(expr(EXPRESSION)]`
+you can use `#[expr(EXPRESSION)]` instead.
+```rust
+use derive_ctor::ctor;
+
+#[derive(ctor)]
+struct MyStruct {
+    #[expr(100)]
+    value: u32
+}
+
+let my_struct = MyStruct::new();
 ```
