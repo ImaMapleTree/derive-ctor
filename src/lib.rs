@@ -86,8 +86,20 @@ pub(crate) fn create_union_token_stream(_derive_input: DeriveInput) -> TokenStre
         "\"unions\" feature must be enabled to use #[derive(ctor)] on unions.").to_compile_error())
 }
 
+#[cfg(feature = "shorthand")]
+#[proc_macro_derive(ctor, attributes(ctor, cloned, default, expr, into, iter))]
+pub fn derive_ctor(input: TokenStream) -> TokenStream {
+    derive_ctor_internal(input)
+}
+
+#[cfg(not(feature = "shorthand"))]
 #[proc_macro_derive(ctor, attributes(ctor))]
 pub fn derive_ctor(input: TokenStream) -> TokenStream {
+    derive_ctor_internal(input)
+}
+
+
+fn derive_ctor_internal(input: TokenStream) -> TokenStream {
     let derive_input = parse_macro_input!(input as DeriveInput);
 
     match &derive_input.data {
@@ -96,6 +108,9 @@ pub fn derive_ctor(input: TokenStream) -> TokenStream {
         Data::Union(_) => create_union_token_stream(derive_input)
     }
 }
+
+
+
 
 pub(crate) fn try_parse_attributes_with_default<T: Parse, F: Fn() -> T>(
     attributes: &[Attribute],
@@ -112,7 +127,7 @@ pub(crate) fn try_parse_attributes_with_default<T: Parse, F: Fn() -> T>(
 pub(crate) fn try_parse_attributes<T: Parse>(attributes: &[Attribute]) -> Result<Option<T>, Error> {
     for attribute in attributes {
         if attribute.path().is_ident(CTOR_WORD) {
-            return attribute.parse_args::<T>().map(|t| Some(t));
+            return attribute.parse_args::<T>().map(Some);
         }
     }
     Ok(None)

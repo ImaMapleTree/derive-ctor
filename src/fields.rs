@@ -1,22 +1,20 @@
 extern crate alloc;
+
 use alloc::collections::BTreeSet as HashSet;
 use alloc::string::ToString;
 use alloc::vec::Vec;
 
+use proc_macro2::{Delimiter, Punct, Span, TokenTree};
 use proc_macro2::Spacing::Alone;
-use proc_macro2::{Delimiter, Punct, Span};
-use quote::{quote, ToTokens, TokenStreamExt};
-use syn::parse::discouraged::AnyDelimiter;
+use quote::{quote, TokenStreamExt, ToTokens};
+use syn::{Attribute, Error, Fields, Ident, LitInt, parse2, token, Token, Type};
 use syn::parse::{Parse, ParseStream};
+use syn::parse::discouraged::AnyDelimiter;
 use syn::spanned::Spanned;
-use syn::token::{Comma, Impl};
-use syn::{parse2, token, Error, Fields, Ident, LitInt, Token, Type};
+use syn::token::Comma;
 
-use crate::constants::{
-    CONFIG_PROP_ERR_MSG, FIELD_PROP_CLONED as CLONED, FIELD_PROP_DEFAULT as DEFAULT,
-    FIELD_PROP_EXPR as EXPR, FIELD_PROP_INTO as INTO, FIELD_PROP_ITER as ITER,
-};
-use crate::{consume_delimited, CtorAttribute, is_phantom_data, try_parse_attributes};
+use crate::{consume_delimited, CtorAttribute, is_phantom_data};
+use crate::constants::{CONFIG_PROP_ERR_MSG, CTOR_WORD, FIELD_PROP_CLONED as CLONED, FIELD_PROP_DEFAULT as DEFAULT, FIELD_PROP_EXPR as EXPR, FIELD_PROP_INTO as INTO, FIELD_PROP_ITER as ITER};
 
 const FIELD_PROPS: &str = "\"cloned\", \"default\", \"expr\", \"into\", \"iter\"";
 
@@ -112,26 +110,7 @@ impl Parse for FieldConfig {
 }
 
 impl FieldConfigProperty {
-    pub fn parse_expr(input: ParseStream) -> syn::Result<Self> {
-        let self_referencing = input.parse::<Token![!]>().is_ok();
-
-        consume_delimited(input, Delimiter::Parenthesis, |buffer| {
-            let mut input_type = None;
-
-            // determine the input_type by looking for the expression: expr(TYPE -> EXPRESSION)
-            if buffer.peek2(Token![->]) {
-                input_type = Some(buffer.parse()?);
-                buffer.parse::<Token![->]>()?;
-            }
-
-            Ok(FieldConfigProperty::Expression { self_referencing, input_type,
-                expression: proc_macro2::TokenStream::parse(&buffer)
-                    .expect("Unable to convert buffer back into TokenStream")
-            })
-        })
-    }
-    
-    pub fn is_generated(&self) -> bool {
+    fn is_generated(&self) -> bool {
         match self {
             FieldConfigProperty::Cloned => false,
             FieldConfigProperty::Default => true,
@@ -144,13 +123,6 @@ impl FieldConfigProperty {
 
 impl Parse for FieldConfigProperty {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        if let Ok(token) = input.parse::<Impl>() {
-            return Err(Error::new(
-                token.span(),
-                "\"impl\" property has been renamed to \"into\".",
-            ));
-        }
-
         let property: Ident = input.parse()?;
         let property_name = property.to_string();
         match property_name.as_str() {
@@ -160,11 +132,24 @@ impl Parse for FieldConfigProperty {
             ITER => consume_delimited(input, Delimiter::Parenthesis, |buffer| {
                 Ok(FieldConfigProperty::Iter { iter_type: buffer.parse()? })
             }),
-            EXPR => Self::parse_expr(input),
-            "method" => Err(Error::new(
-                property.span(),
-                "\"method\" property has been removed. Please refer to documentation for a list of valid properties."
-            )),
+            EXPR => {
+                let self_referencing = input.parse::<Token![!]>().is_ok();
+
+                consume_delimited(input, Delimiter::Parenthesis, |buffer| {
+                    let mut input_type = None;
+
+                    // determine the input_type by looking for the expression: expr(TYPE -> EXPRESSION)
+                    if buffer.peek2(Token![->]) {
+                        input_type = Some(buffer.parse()?);
+                        buffer.parse::<Token![->]>()?;
+                    }
+
+                    Ok(FieldConfigProperty::Expression { self_referencing, input_type,
+                        expression: proc_macro2::TokenStream::parse(buffer)
+                            .expect("Unable to convert buffer back into TokenStream")
+                    })
+                })
+            }
             _ => Err(Error::new(
                 property.span(),
                 CONFIG_PROP_ERR_MSG.replace("{prop}", &property_name).replace("{values}", FIELD_PROPS)
@@ -203,6 +188,22 @@ impl ToTokens for GeneratedField {
     }
 }
 
+fn try_parse_field_attributes(attributes: &[Attribute]) -> Result<Option<FieldConfig>, Error> {
+    for attribute in attributes {
+        let attr_path = attribute.path();
+        if attr_path.is_ident(CTOR_WORD) {
+            return attribute.parse_args().map(Some);
+        }
+        let attribute_token_stream = attribute.to_token_stream();
+        if let Some(TokenTree::Group(group)) = attribute_token_stream.into_iter().skip(1).next() {
+            if let Ok(property) = parse2::<FieldConfigProperty>(group.stream()) {
+                return Ok(Some(FieldConfig { property, applications: Default::default() }))
+            }
+        }
+    }
+    Ok(None)
+}
+
 pub(crate) fn generate_ctor_meta(
     ctor_attributes: &HashSet<CtorAttribute>,
     fields: &Fields,
@@ -211,7 +212,7 @@ pub(crate) fn generate_ctor_meta(
     let mut meta = ConstructorMeta::default();
 
     for (field_index, field) in fields.iter().enumerate() {
-        let configuration = try_parse_attributes::<FieldConfig>(&field.attrs)?;
+        let configuration = try_parse_field_attributes(&field.attrs)?;
 
         let span = field.span();
 
